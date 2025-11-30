@@ -6,6 +6,10 @@ import { Input } from '@/components/ui/input'
 import type { LoginRequest, LoginResponse } from '~/types/auth'
 import { useUserStore } from '@/stores/user'
 
+definePageMeta({
+  middleware: 'guest'
+})
+
 const isLoading = ref(false)
 
 const form = ref<LoginRequest>({

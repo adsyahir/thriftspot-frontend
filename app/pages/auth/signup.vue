@@ -4,6 +4,10 @@ import { SparklesIcon, MailIcon, UserIcon, LockIcon } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
+definePageMeta({
+  middleware: 'guest'
+})
+
 const email = ref('')
 const username = ref('')
 const password = ref('')

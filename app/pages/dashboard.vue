@@ -1,17 +1,13 @@
 <script setup lang="ts">
-import { SparklesIcon, PackageIcon, StoreIcon, TrendingUpIcon, UsersIcon, LogOutIcon } from 'lucide-vue-next'
+import { SparklesIcon, PackageIcon, StoreIcon, TrendingUpIcon, UsersIcon, LogOutIcon, ShieldIcon } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { useUserStore } from '@/stores/user'
 
-const userStore = useUserStore()
-const router = useRouter()
-
-// Redirect to login if not authenticated
-onMounted(() => {
-  if (!userStore.isAuthenticated) {
-    navigateTo('/auth/signin')
-  }
+definePageMeta({
+  middleware: 'auth'
 })
+
+const userStore = useUserStore()
 
 const handleLogout = () => {
   userStore.clearUser()
@@ -152,7 +148,7 @@ const recentItems = [
       </div>
 
       <!-- Quick Actions -->
-      <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
           <h3 class="text-lg font-semibold text-gray-900 mb-2">Add New Item</h3>
           <p class="text-sm text-gray-600 mb-4">List a new thrift item for sale</p>
@@ -170,6 +166,15 @@ const recentItems = [
           <p class="text-sm text-gray-600 mb-4">Check your performance</p>
           <Button variant="outline" class="w-full">Analytics</Button>
         </div>
+
+        <NuxtLink to="/admin/roles" class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer">
+          <div class="flex items-center gap-2 mb-2">
+            <ShieldIcon class="w-5 h-5 text-gray-900" />
+            <h3 class="text-lg font-semibold text-gray-900">Roles & Permissions</h3>
+          </div>
+          <p class="text-sm text-gray-600 mb-4">Manage user access control</p>
+          <Button variant="outline" class="w-full">Manage Access</Button>
+        </NuxtLink>
       </div>
     </main>
   </div>
