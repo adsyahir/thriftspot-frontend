@@ -12,7 +12,7 @@ export default defineNuxtConfig({
       tailwindcss(),
     ],
   },
-  modules: ['shadcn-nuxt'],
+  modules: ['shadcn-nuxt', '@pinia/nuxt'],
   shadcn: {
     /**
      * Prefix for all the imported component.
@@ -26,5 +26,10 @@ export default defineNuxtConfig({
      * @default "@/components/ui"
      */
     componentDir: '@/components/ui'
+  },
+  runtimeConfig: {
+    public: {
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://127.0.0.1:8000/api'
+    }
   }
 })
