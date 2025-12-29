@@ -21,9 +21,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { roleService } from '@/services/roles'
+import { useRoleService } from '@/services/index'
 import type { Permission } from '@/types/roles'
 
+const roleService = useRoleService()
 const permissions = ref<Permission[]>([])
 const loading = ref(false)
 const isDialogOpen = ref(false)

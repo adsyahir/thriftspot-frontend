@@ -1,18 +1,14 @@
 <script setup lang="ts">
-import { SparklesIcon, PackageIcon, StoreIcon, TrendingUpIcon, UsersIcon, LogOutIcon, ShieldIcon } from 'lucide-vue-next'
+import { PackageIcon, StoreIcon, TrendingUpIcon, UsersIcon } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { useUserStore } from '@/stores/user'
 
 definePageMeta({
-  middleware: 'auth'
+  middleware: 'auth',
+  layout: 'auth'
 })
 
 const userStore = useUserStore()
-
-const handleLogout = () => {
-  userStore.clearUser()
-  navigateTo('/auth/signin')
-}
 
 // Sample stats data
 const stats = [
@@ -32,44 +28,20 @@ const recentItems = [
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <header class="bg-white border-b border-gray-200">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div class="flex items-center justify-between">
-          <!-- Logo -->
-          <NuxtLink to="/" class="flex items-center gap-2">
-            <SparklesIcon class="w-8 h-8 text-gray-900" />
-            <span class="text-2xl font-bold text-gray-900">ThriftSpot</span>
-          </NuxtLink>
+  <div class="space-y-6">
+    <!-- Page Header -->
+    <div class="mb-6">
+      <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+      <ClientOnly>
+        <p class="text-gray-600 mt-1">Welcome back, {{ userStore.username }}! Here's what's happening today.</p>
+        <template #fallback>
+          <p class="text-gray-600 mt-1">Welcome back! Here's what's happening today.</p>
+        </template>
+      </ClientOnly>
+    </div>
 
-          <!-- User Info & Logout -->
-          <div class="flex items-center gap-4">
-            <div class="text-right">
-              <p class="text-sm font-medium text-gray-900">{{ userStore.username || 'User' }}</p>
-              <p class="text-xs text-gray-600">{{ userStore.email }}</p>
-            </div>
-            <Button variant="outline" size="sm" @click="handleLogout">
-              <LogOutIcon class="w-4 h-4 mr-2" />
-              Logout
-            </Button>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Welcome Section -->
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">
-          Welcome back, {{ userStore.username || 'User' }}! 👋
-        </h1>
-        <p class="text-gray-600">Here's what's happening with your thrift shop today.</p>
-      </div>
-
-      <!-- Stats Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Stats Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div
           v-for="stat in stats"
           :key="stat.label"
@@ -146,36 +118,5 @@ const recentItems = [
           </table>
         </div>
       </div>
-
-      <!-- Quick Actions -->
-      <div class="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">Add New Item</h3>
-          <p class="text-sm text-gray-600 mb-4">List a new thrift item for sale</p>
-          <Button class="w-full">Add Item</Button>
-        </div>
-
-        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">Manage Shop</h3>
-          <p class="text-sm text-gray-600 mb-4">Update your shop details</p>
-          <Button variant="outline" class="w-full">Manage</Button>
-        </div>
-
-        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">View Analytics</h3>
-          <p class="text-sm text-gray-600 mb-4">Check your performance</p>
-          <Button variant="outline" class="w-full">Analytics</Button>
-        </div>
-
-        <NuxtLink to="/admin/roles" class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer">
-          <div class="flex items-center gap-2 mb-2">
-            <ShieldIcon class="w-5 h-5 text-gray-900" />
-            <h3 class="text-lg font-semibold text-gray-900">Roles & Permissions</h3>
-          </div>
-          <p class="text-sm text-gray-600 mb-4">Manage user access control</p>
-          <Button variant="outline" class="w-full">Manage Access</Button>
-        </NuxtLink>
-      </div>
-    </main>
   </div>
 </template>

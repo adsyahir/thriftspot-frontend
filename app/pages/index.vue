@@ -14,8 +14,7 @@ const categories = [
 </script>
 
 <template>
-  <NuxtLayout name="guest">
-    <!-- Hero Section -->
+  <!-- Hero Section -->
     <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
       <div class="text-center max-w-3xl mx-auto">
         <h1 class="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
@@ -95,5 +94,4 @@ const categories = [
         </Button>
       </div>
     </section>
-  </NuxtLayout>
 </template>

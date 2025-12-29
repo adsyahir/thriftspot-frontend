@@ -3,14 +3,14 @@ import { ref } from 'vue'
 import { SparklesIcon, MailIcon, LockIcon } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import type { LoginRequest, LoginResponse } from '~/types/auth'
+import type { LoginRequest } from '~/types/auth'
 import { useUserStore } from '@/stores/user'
 
 definePageMeta({
-  middleware: 'guest'
+  middleware: 'guest',
+  // Disable middleware checks during login to prevent conflicts
+  keepalive: false
 })
-
-const isLoading = ref(false)
 
 const form = ref<LoginRequest>({
   email: '',
@@ -19,27 +19,23 @@ const form = ref<LoginRequest>({
 })
 
 const userStore = useUserStore()
+const errorMessage = ref<string | null>(null)
 
 const handleSignIn = async () => {
-  isLoading.value = true
-  const api = useApi()
-  console.log('Sign in with:', form.value)
+  errorMessage.value = null
 
   try {
-    const response = await api.post('/auth/login', form.value) as LoginResponse
+    const result = await userStore.login(form.value)
 
-    // Store user data in Pinia store
-    userStore.setUser(response.email, response.username, response.token)
-
-    console.log('Login successful:', response)
-
-    // Redirect to dashboard
-    navigateTo('/dashboard')
-  } catch (error) {
-    console.error('Login failed:', error)
-    // TODO: Show error message to user
-  } finally {
-    isLoading.value = false
+    if (result.success) {
+      // Check if there's a redirect query parameter
+      navigateTo('/dashboard')
+    } else {
+      errorMessage.value = result.message || 'Login failed. Please try again.'
+    }
+  } catch (error: any) {
+    console.error('[SIGNIN] Exception during login:', error)
+    errorMessage.value = error.message || 'An error occurred during login'
   }
 }
 </script>
@@ -63,6 +59,11 @@ const handleSignIn = async () => {
 
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
       <div class="bg-white py-8 px-4 shadow-lg sm:rounded-lg sm:px-10">
+        <!-- Error Message -->
+        <div v-if="errorMessage" class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+          <p class="text-sm">{{ errorMessage }}</p>
+        </div>
+
         <form @submit.prevent="handleSignIn" class="space-y-6">
           <!-- Email Field -->
           <div>
@@ -108,8 +109,13 @@ const handleSignIn = async () => {
 
           <!-- Submit Button -->
           <div>
-            <Button type="submit" class="w-full" :disabled="isLoading">
-              {{ isLoading ? 'Signing in...' : 'Sign in' }}
+            <Button
+              type="button"
+              class="w-full"
+              :disabled="userStore.isLoading"
+              @click="handleSignIn"
+            >
+              {{ userStore.isLoading ? 'Signing in...' : 'Sign in' }}
             </Button>
           </div>
         </form>

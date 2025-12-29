@@ -23,9 +23,10 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { roleService } from '@/services/roles'
+import { useRoleService } from '@/services/roles'
 import type { Role, Permission } from '@/types/roles'
 
+const roleService = useRoleService()
 const roles = ref<Role[]>([])
 const permissions = ref<Permission[]>([])
 const loading = ref(false)

@@ -1,11 +1,19 @@
-export default defineNuxtRouteMiddleware(() => {
-  const userStore = useUserStore()
+export default defineNuxtRouteMiddleware(async () => {
+  // Only run on client-side where we have access to cookies/tokens
+  if (import.meta.server) {
+    return
+  }
 
-  // If user is not authenticated or token is expired, redirect to signin
-  if (!userStore.isAuthenticated || userStore.isTokenExpired) {
-    if (userStore.isTokenExpired) {
-      userStore.clearUser()
+  const userStore = useUserStore()
+  // If store shows authenticated, verify with backend to be sure
+  try {
+    const isAuthenticated = await userStore.verifyAuth()
+    console.log('[AUTH MIDDLEWARE] isAuthenticated:', isAuthenticated)
+    if (!isAuthenticated) {
+      return navigateTo('/auth/signin', { replace: true })
     }
-    return navigateTo('/auth/signin')
+  } catch (error) {
+    console.error('[AUTH MIDDLEWARE] Error verifying auth:', error)
+    return navigateTo('/auth/signin', { replace: true })
   }
 })

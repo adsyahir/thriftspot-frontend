@@ -24,7 +24,6 @@ const handleSignUp = async () => {
 
   // TODO: Implement actual sign up logic
   setTimeout(() => {
-    console.log('Sign up with:', { email: email.value, username: username.value })
     isLoading.value = false
   }, 1000)
 }

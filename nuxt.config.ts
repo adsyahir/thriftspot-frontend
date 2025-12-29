@@ -2,13 +2,13 @@
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineNuxtConfig({
-  
+  srcDir: 'app/',
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   css: ['./app/assets/css/main.css'],
   vite: {
     plugins: [
-      
+
       tailwindcss(),
     ],
   },
@@ -29,7 +29,13 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://127.0.0.1:8000/api'
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8000/api'
     }
+  },
+  app: {
+    buildAssetsDir: '/_nuxt/',
+  },
+  experimental: {
+    appManifest: false
   }
 })

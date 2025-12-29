@@ -1,10 +1,5 @@
+import { BaseService } from './base'
 import type {
-  RolesResponse,
-  PermissionsResponse,
-  RoleResponse,
-  PermissionResponse,
-  UsersWithRolesResponse,
-  UserRoleResponse,
   CreateRoleRequest,
   UpdateRoleRequest,
   CreatePermissionRequest,
@@ -13,61 +8,62 @@ import type {
   RemoveRoleRequest,
 } from '@/types/roles'
 
-export class RoleService {
-  private api: any
-
-  constructor() {
-    // Get the axios instance from the plugin
-    const { $api } = useNuxtApp()
-    this.api = $api
-  }
-
+export class RoleService extends BaseService {
   // Role Management
-  async getRoles(): Promise<RolesResponse> {
-    return await this.api.get('/roles')
+  async getRoles() {
+    return await this.get('/roles')
   }
 
-  async createRole(data: CreateRoleRequest): Promise<RoleResponse> {
-    return await this.api.post('/roles', data)
+  async createRole(data: CreateRoleRequest) {
+    return await this.post('/roles', data)
   }
 
-  async updateRole(id: number, data: UpdateRoleRequest): Promise<RoleResponse> {
-    return await this.api.put(`/roles/${id}`, data)
+  async updateRole(id: number, data: UpdateRoleRequest) {
+    return await this.put(`/roles/${id}`, data)
   }
 
-  async deleteRole(id: number): Promise<{ message: string }> {
-    return await this.api.delete(`/roles/${id}`)
+  async deleteRole(id: number) {
+    return await this.delete(`/roles/${id}`)
   }
 
   // Permission Management
-  async getPermissions(): Promise<PermissionsResponse> {
-    return await this.api.get('/permissions')
+  async getPermissions() {
+    return await this.get('/permissions')
   }
 
-  async createPermission(data: CreatePermissionRequest): Promise<PermissionResponse> {
-    return await this.api.post('/permissions', data)
+  async createPermission(data: CreatePermissionRequest) {
+    return await this.post('/permissions', data)
   }
 
-  async updatePermission(id: number, data: UpdatePermissionRequest): Promise<PermissionResponse> {
-    return await this.api.put(`/permissions/${id}`, data)
+  async updatePermission(id: number, data: UpdatePermissionRequest) {
+    return await this.put(`/permissions/${id}`, data)
   }
 
-  async deletePermission(id: number): Promise<{ message: string }> {
-    return await this.api.delete(`/permissions/${id}`)
+  async deletePermission(id: number) {
+    return await this.delete(`/permissions/${id}`)
   }
 
   // User Role Management
-  async getUsersWithRoles(): Promise<UsersWithRolesResponse> {
-    return await this.api.get('/users/roles')
+  async getUsersWithRoles() {
+    return await this.get('/users/roles')
   }
 
-  async assignRoleToUser(userId: number, data: AssignRoleRequest): Promise<UserRoleResponse> {
-    return await this.api.post(`/users/${userId}/roles`, data)
+  async assignRoleToUser(userId: number, data: AssignRoleRequest) {
+    return await this.post(`/users/${userId}/roles`, data)
   }
 
-  async removeRoleFromUser(userId: number, data: RemoveRoleRequest): Promise<UserRoleResponse> {
-    return await this.api.delete(`/users/${userId}/roles`, { data })
+  async removeRoleFromUser(userId: number, data: RemoveRoleRequest) {
+    return await this.delete(`/users/${userId}/roles`)
   }
 }
 
-export const roleService = new RoleService()
+/**
+ * Composable to get RoleService instance
+ * Use this in components: const roleService = useRoleService()
+ */
+export const useRoleService = () => {
+  const nuxtApp = useNuxtApp()
+  const service = new RoleService()
+  service.init(nuxtApp)
+  return service
+}
