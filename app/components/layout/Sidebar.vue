@@ -12,6 +12,8 @@ import {
   ChevronRight
 } from 'lucide-vue-next'
 
+const userStore = useUserStore()
+
 const isSidebarOpen = ref(false)
 
 const navigation = [

@@ -5,7 +5,7 @@ import type {
   CreatePermissionRequest,
   UpdatePermissionRequest,
   AssignRoleRequest,
-  RemoveRoleRequest,
+  RemoveRoleRequest
 } from '@/types/roles'
 
 export class RoleService extends BaseService {
@@ -44,15 +44,21 @@ export class RoleService extends BaseService {
   }
 
   // User Role Management
-  async getUsersWithRoles() {
-    return await this.get('/users/roles')
+  async getUsersWithRoles(page: number = 1, search: string = '', userSearch: string = '', emailSearch: string = '') {
+    const params: Record<string, any> = { page }
+
+    if (search) params.search = search
+    if (userSearch) params.name = userSearch
+    if (emailSearch) params.email = emailSearch
+
+    return await this.get('/users/roles', params)
   }
 
   async assignRoleToUser(userId: number, data: AssignRoleRequest) {
     return await this.post(`/users/${userId}/roles`, data)
   }
 
-  async removeRoleFromUser(userId: number, data: RemoveRoleRequest) {
+  async removeRoleFromUser(userId: number, _data: RemoveRoleRequest) {
     return await this.delete(`/users/${userId}/roles`)
   }
 }

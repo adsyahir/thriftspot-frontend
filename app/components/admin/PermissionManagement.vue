@@ -1,18 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Plus, Pencil, Trash2, Key } from 'lucide-vue-next'
-import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Key, Info, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import {
   Table,
   TableBody,
@@ -27,77 +15,22 @@ import type { Permission } from '@/types/roles'
 const roleService = useRoleService()
 const permissions = ref<Permission[]>([])
 const loading = ref(false)
-const isDialogOpen = ref(false)
-const isEditMode = ref(false)
-const currentPermission = ref<Permission | null>(null)
 
-const formData = ref({
-  name: '',
-})
+// Pagination state (you'll connect this to your logic)
+const currentPage = ref(1)
+const totalPages = ref(10) // Example: replace with your actual total pages
+const perPage = ref(10)
+const total = ref(100) // Example: replace with your actual total count
 
 const loadPermissions = async () => {
   try {
     loading.value = true
     const response = await roleService.getPermissions()
+    console.log(response.data);
     permissions.value = response.data
   } catch (error) {
     console.error('Failed to load permissions:', error)
     alert('Failed to load permissions. Please try again.')
-  } finally {
-    loading.value = false
-  }
-}
-
-const openCreateDialog = () => {
-  isEditMode.value = false
-  currentPermission.value = null
-  formData.value = {
-    name: '',
-  }
-  isDialogOpen.value = true
-}
-
-const openEditDialog = (permission: Permission) => {
-  isEditMode.value = true
-  currentPermission.value = permission
-  formData.value = {
-    name: permission.name,
-  }
-  isDialogOpen.value = true
-}
-
-const handleSubmit = async () => {
-  try {
-    loading.value = true
-    if (isEditMode.value && currentPermission.value) {
-      await roleService.updatePermission(currentPermission.value.id, {
-        name: formData.value.name,
-      })
-    } else {
-      await roleService.createPermission({
-        name: formData.value.name,
-      })
-    }
-    isDialogOpen.value = false
-    await loadPermissions()
-  } catch (error) {
-    console.error('Failed to save permission:', error)
-    alert('Failed to save permission. Please try again.')
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleDelete = async (id: number) => {
-  if (!confirm('Are you sure you want to delete this permission? This may affect existing roles.')) return
-
-  try {
-    loading.value = true
-    await roleService.deletePermission(id)
-    await loadPermissions()
-  } catch (error) {
-    console.error('Failed to delete permission:', error)
-    alert('Failed to delete permission. Please try again.')
   } finally {
     loading.value = false
   }
@@ -111,48 +44,17 @@ onMounted(() => {
 <template>
   <div>
     <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <h2 class="text-2xl font-bold text-gray-900">Permissions</h2>
-        <p class="text-sm text-gray-600 mt-1">Manage system permissions</p>
+    <div class="mb-6">
+      <div class="flex items-start gap-3">
+        <div class="flex-1">
+          <h2 class="text-2xl font-bold text-gray-900">Permissions</h2>
+          <p class="text-sm text-gray-600 mt-1">View all system permissions</p>
+        </div>
+        <div class="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+          <Info class="w-4 h-4 text-blue-600" />
+          <span class="text-sm text-blue-700 font-medium">Read-only</span>
+        </div>
       </div>
-      <Dialog v-model:open="isDialogOpen">
-        <DialogTrigger as-child>
-          <Button @click="openCreateDialog">
-            <Plus class="w-4 h-4 mr-2" />
-            Create Permission
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{{ isEditMode ? 'Edit Permission' : 'Create New Permission' }}</DialogTitle>
-            <DialogDescription>
-              {{ isEditMode ? 'Update permission details' : 'Add a new permission to the system' }}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div class="space-y-4 py-4">
-            <div class="space-y-2">
-              <Label for="permission-name">Permission Name</Label>
-              <Input
-                id="permission-name"
-                v-model="formData.name"
-                placeholder="e.g., create-items, edit-users"
-              />
-              <p class="text-xs text-gray-500">
-                Use kebab-case naming convention (e.g., create-items, delete-posts)
-              </p>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" @click="isDialogOpen = false">Cancel</Button>
-            <Button @click="handleSubmit" :disabled="loading || !formData.name">
-              {{ isEditMode ? 'Update' : 'Create' }} Permission
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
 
     <!-- Permissions Table -->
@@ -164,12 +66,11 @@ onMounted(() => {
             <TableHead>Guard</TableHead>
             <TableHead>Created</TableHead>
             <TableHead>Last Updated</TableHead>
-            <TableHead class="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <TableRow v-if="loading">
-            <TableCell colspan="5" class="text-center py-8">
+            <TableCell colspan="4" class="text-center py-8">
               <div class="flex items-center justify-center gap-2">
                 <div class="w-4 h-4 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin"></div>
                 Loading permissions...
@@ -177,8 +78,8 @@ onMounted(() => {
             </TableCell>
           </TableRow>
           <TableRow v-else-if="permissions.length === 0">
-            <TableCell colspan="5" class="text-center py-8 text-gray-500">
-              No permissions found. Create your first permission to get started.
+            <TableCell colspan="4" class="text-center py-8 text-gray-500">
+              No permissions found.
             </TableCell>
           </TableRow>
           <TableRow v-for="permission in permissions" :key="permission.id" v-else>
@@ -201,28 +102,80 @@ onMounted(() => {
                 {{ new Date(permission.updated_at).toLocaleDateString() }}
               </span>
             </TableCell>
-            <TableCell class="text-right">
-              <div class="flex items-center justify-end gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  @click="openEditDialog(permission)"
-                >
-                  <Pencil class="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  @click="handleDelete(permission.id)"
-                  class="text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  <Trash2 class="w-4 h-4" />
-                </Button>
-              </div>
-            </TableCell>
           </TableRow>
         </TableBody>
       </Table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6 rounded-b-lg mt-4">
+      <!-- Results info -->
+      <div class="flex-1 flex justify-between sm:hidden">
+        <button
+          class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="currentPage === 1"
+        >
+          Previous
+        </button>
+        <button
+          class="relative ml-3 inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="currentPage === totalPages"
+        >
+          Next
+        </button>
+      </div>
+
+      <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+        <!-- Showing X to Y of Z results -->
+        <div>
+          <p class="text-sm text-gray-700">
+            Showing
+            <span class="font-medium">{{ (currentPage - 1) * perPage + 1 }}</span>
+            to
+            <span class="font-medium">{{ Math.min(currentPage * perPage, total) }}</span>
+            of
+            <span class="font-medium">{{ total }}</span>
+            results
+          </p>
+        </div>
+
+        <!-- Pagination buttons -->
+        <div>
+          <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+            <!-- Previous button -->
+            <button
+              class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              :disabled="currentPage === 1"
+            >
+              <span class="sr-only">Previous</span>
+              <ChevronLeft class="h-5 w-5" />
+            </button>
+
+            <!-- Page numbers -->
+            <button
+              v-for="page in totalPages"
+              :key="page"
+              class="relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+              :class="[
+                page === currentPage
+                  ? 'z-10 bg-gray-900 border-gray-900 text-white'
+                  : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+              ]"
+            >
+              {{ page }}
+            </button>
+
+            <!-- Next button -->
+            <button
+              class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              :disabled="currentPage === totalPages"
+            >
+              <span class="sr-only">Next</span>
+              <ChevronRight class="h-5 w-5" />
+            </button>
+          </nav>
+        </div>
+      </div>
     </div>
   </div>
 </template>

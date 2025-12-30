@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { UserPlus, Shield, Trash2, Users } from 'lucide-vue-next'
+import { ref, onMounted, watch, nextTick } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { UserPlus, Shield, Trash2, Users, ChevronLeft, ChevronRight, Search, X } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Dialog,
   DialogContent,
@@ -31,8 +33,19 @@ import { Badge } from '@/components/ui/badge'
 import { useRoleService } from '@/services/roles'
 import type { UserWithRoles, Role } from '@/types/roles'
 
+const route = useRoute()
+const router = useRouter()
 const roleService = useRoleService()
-const users = ref<UserWithRoles[]>([])
+
+const users = ref({
+  data: [] as UserWithRoles[],
+  pagination: {
+    currentPage: 1,
+    totalPages: 10,
+    perPage: 10,
+    total: 100
+  }
+})
 const roles = ref<Role[]>([])
 const loading = ref(false)
 const isDialogOpen = ref(false)
@@ -42,11 +55,30 @@ const formData = ref({
   selectedRole: '',
 })
 
-const loadUsers = async () => {
+// Initialize search state from URL query params
+const searchFilters = ref({
+  global: (route.query.search as string) || '',
+  user: (route.query.name as string) || '',
+  email: (route.query.email as string) || '',
+})
+
+const loadUsers = async (page: number = 1) : Promise<void> => {
   try {
     loading.value = true
-    const response = await roleService.getUsersWithRoles()
-    users.value = response.data
+    const response = await roleService.getUsersWithRoles(
+      page,
+      searchFilters.value.global,
+      searchFilters.value.user,
+      searchFilters.value.email
+    )
+    users.value.data = response.data.data
+    // Update pagination from API response
+    users.value.pagination = {
+      currentPage: response.data.current_page,
+      totalPages: response.data.last_page,
+      perPage: response.data.per_page,
+      total: response.data.total
+    }
   } catch (error) {
     console.error('Failed to load users:', error)
     alert('Failed to load users. Please try again.')
@@ -111,8 +143,128 @@ const getAvailableRoles = (userRoles: string[]) => {
   return roles.value.filter(role => !userRoles.includes(role.name))
 }
 
+const changePage = async (page: number) => {
+  if (page < 1 || page > users.value.pagination.totalPages) return
+
+  // Save current scroll position
+  const scrollY = window.scrollY
+
+  // Update URL with page parameter
+  const query: Record<string, string> = { ...route.query as Record<string, string>, page: String(page) }
+  await router.replace({ query })
+
+  // Load users data
+  await loadUsers(page)
+
+  // Wait for Vue to update the DOM, then restore scroll position
+  await nextTick()
+  requestAnimationFrame(() => {
+    window.scrollTo(0, scrollY)
+  })
+}
+
+const getPageNumbers = () => {
+  const current = users.value.pagination.currentPage
+  const total = users.value.pagination.totalPages
+  const delta = 2 // Number of pages to show on each side of current page
+  const pages: (number | string)[] = []
+
+  if (total <= 7) {
+    // Show all pages if total is small
+    for (let i = 1; i <= total; i++) {
+      pages.push(i)
+    }
+  } else {
+    // Always show first page
+    pages.push(1)
+
+    // Calculate range around current page
+    const start = Math.max(2, current - delta)
+    const end = Math.min(total - 1, current + delta)
+
+    // Add ellipsis after first page if needed
+    if (start > 2) {
+      pages.push('...')
+    }
+
+    // Add pages around current
+    for (let i = start; i <= end; i++) {
+      pages.push(i)
+    }
+
+    // Add ellipsis before last page if needed
+    if (end < total - 1) {
+      pages.push('...')
+    }
+
+    // Always show last page
+    pages.push(total)
+  }
+
+  return pages
+}
+
+const clearSearch = () => {
+  searchFilters.value.global = ''
+  searchFilters.value.user = ''
+  searchFilters.value.email = ''
+  // Note: The watch on searchFilters will handle URL update and data reload with scroll preservation
+}
+
+// Sync search filters with URL query params
+const updateUrlFromFilters = async () => {
+  // Start with existing query params to preserve things like 'tab'
+  const query: Record<string, string> = { ...route.query as Record<string, string> }
+
+  // Update or remove search parameters
+  if (searchFilters.value.global) {
+    query.search = searchFilters.value.global
+  } else {
+    delete query.search
+  }
+
+  if (searchFilters.value.user) {
+    query.name = searchFilters.value.user
+  } else {
+    delete query.name
+  }
+
+  if (searchFilters.value.email) {
+    query.email = searchFilters.value.email
+  } else {
+    delete query.email
+  }
+
+  // Reset to page 1 when searching
+  delete query.page
+
+  await router.replace({ query })
+}
+
+// Debounced search - watch for changes and reload with delay
+let searchTimeout: NodeJS.Timeout | null = null
+watch(searchFilters, () => {
+  if (searchTimeout) clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(async () => {
+    // Save current scroll position
+    const scrollY = window.scrollY
+
+    users.value.pagination.currentPage = 1 // Reset to first page on new search
+    await updateUrlFromFilters()
+    await loadUsers(1)
+
+    // Wait for Vue to update the DOM, then restore scroll position
+    await nextTick()
+    requestAnimationFrame(() => {
+      window.scrollTo(0, scrollY)
+    })
+  }, 500) // 500ms debounce
+}, { deep: true })
+
 onMounted(() => {
-  loadUsers()
+  // Get initial page from URL or default to 1
+  const initialPage = parseInt(route.query.page as string) || 1
+  loadUsers(initialPage)
   loadRoles()
 })
 </script>
@@ -123,6 +275,80 @@ onMounted(() => {
     <div class="mb-6">
       <h2 class="text-2xl font-bold text-gray-900">User Role Assignments</h2>
       <p class="text-sm text-gray-600 mt-1">Manage user role assignments and permissions</p>
+    </div>
+
+    <!-- Search Filters -->
+    <div class="mb-4 space-y-4">
+      <!-- Global Search -->
+      <div class="relative">
+        <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <Input
+          v-model="searchFilters.global"
+          type="text"
+          placeholder="Search all fields..."
+          class="pl-10 pr-10"
+        />
+        <button
+          v-if="searchFilters.global"
+          @click="searchFilters.global = ''"
+          class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+        >
+          <X class="w-4 h-4" />
+        </button>
+      </div>
+
+      <!-- Column Specific Search -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- User Search -->
+        <div class="relative">
+          <Users class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            v-model="searchFilters.user"
+            type="text"
+            placeholder="Search by user..."
+            class="pl-10 pr-10"
+          />
+          <button
+            v-if="searchFilters.user"
+            @click="searchFilters.user = ''"
+            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          >
+            <X class="w-4 h-4" />
+          </button>
+        </div>
+
+        <!-- Email Search -->
+        <div class="relative">
+          <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            v-model="searchFilters.email"
+            type="text"
+            placeholder="Search by email..."
+            class="pl-10 pr-10"
+          />
+          <button
+            v-if="searchFilters.email"
+            @click="searchFilters.email = ''"
+            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          >
+            <X class="w-4 h-4" />
+          </button>
+        </div>
+
+        <!-- Clear All Button -->
+        <div class="flex items-center">
+          <Button
+            variant="outline"
+            size="sm"
+            @click="clearSearch"
+            :disabled="!searchFilters.global && !searchFilters.user && !searchFilters.email"
+            class="w-full"
+          >
+            <X class="w-4 h-4 mr-2" />
+            Clear All Filters
+          </Button>
+        </div>
+      </div>
     </div>
 
     <!-- Users Table -->
@@ -147,12 +373,12 @@ onMounted(() => {
               </div>
             </TableCell>
           </TableRow>
-          <TableRow v-else-if="users.length === 0">
+          <TableRow v-else-if="users.data.length === 0">
             <TableCell colspan="6" class="text-center py-8 text-gray-500">
               No users found.
             </TableCell>
           </TableRow>
-          <TableRow v-for="user in users" :key="user.id" v-else>
+          <TableRow v-for="user in users.data" :key="user.id" v-else>
             <TableCell>
               <div class="flex items-center gap-2">
                 <Users class="w-4 h-4 text-gray-500" />
@@ -290,6 +516,90 @@ onMounted(() => {
           </TableRow>
         </TableBody>
       </Table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6 rounded-b-lg mt-4">
+      <!-- Mobile pagination -->
+      <div class="flex-1 flex justify-between sm:hidden">
+        <button
+          @click="changePage(users.pagination.currentPage - 1)"
+          class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="users.pagination.currentPage === 1"
+        >
+          Previous
+        </button>
+        <button
+          @click="changePage(users.pagination.currentPage + 1)"
+          class="relative ml-3 inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="users.pagination.currentPage === users.pagination.totalPages"
+        >
+          Next
+        </button>
+      </div>
+
+      <!-- Desktop pagination -->
+      <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+        <!-- Results info -->
+        <div>
+          <p class="text-sm text-gray-700">
+            Showing
+            <span class="font-medium">{{ (users.pagination.currentPage - 1) * users.pagination.perPage + 1 }}</span>
+            to
+            <span class="font-medium">{{ Math.min(users.pagination.currentPage * users.pagination.perPage, users.pagination.total) }}</span>
+            of
+            <span class="font-medium">{{ users.pagination.total }}</span>
+            results
+          </p>
+        </div>
+
+        <!-- Pagination buttons -->
+        <div>
+          <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+            <!-- Previous button -->
+            <button
+              @click="changePage(users.pagination.currentPage - 1)"
+              class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              :disabled="users.pagination.currentPage === 1"
+            >
+              <span class="sr-only">Previous</span>
+              <ChevronLeft class="h-5 w-5" />
+            </button>
+
+            <!-- Page numbers -->
+            <template v-for="(page, index) in getPageNumbers()" :key="index">
+              <button
+                v-if="typeof page === 'number'"
+                @click="changePage(page)"
+                class="relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                :class="[
+                  page === users.pagination.currentPage
+                    ? 'z-10 bg-gray-900 border-gray-900 text-white'
+                    : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                ]"
+              >
+                {{ page }}
+              </button>
+              <span
+                v-else
+                class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
+              >
+                {{ page }}
+              </span>
+            </template>
+
+            <!-- Next button -->
+            <button
+              @click="changePage(users.pagination.currentPage + 1)"
+              class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              :disabled="users.pagination.currentPage === users.pagination.totalPages"
+            >
+              <span class="sr-only">Next</span>
+              <ChevronRight class="h-5 w-5" />
+            </button>
+          </nav>
+        </div>
+      </div>
     </div>
   </div>
 </template>

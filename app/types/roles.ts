@@ -73,6 +73,10 @@ export interface PermissionsResponse {
 
 export interface UsersWithRolesResponse {
   data: UserWithRoles[];
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
 }
 
 export interface UserRoleResponse {
@@ -82,3 +86,12 @@ export interface UserRoleResponse {
     roles: string[];
   };
 }
+
+export interface UserRolesRequest {
+  page?: number;
+  per_page?: number;
+  search?: string;
+  name?: string;
+  email?: string;
+}
+
