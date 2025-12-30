@@ -344,6 +344,24 @@ onBeforeUnmount(() => {
       <p class="text-sm text-gray-600 mt-1">Manage user role assignments and permissions</p>
     </div>
 
+    <!-- Per Page Selector -->
+    <div class="flex items-center justify-end gap-2 px-4 py-3  mb-1">
+      <Select v-model="selectedPerPage">
+        <SelectTrigger id="per-page" class="w-[140px]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem
+            v-for="option in perPageOptions"
+            :key="option.value"
+            :value="option.value"
+          >
+            {{ option.label }}
+          </SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+
     <!-- Search Filters -->
     <div class="mb-4 space-y-4">
       <!-- Global Search -->
@@ -419,7 +437,7 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- Users Table -->
-    <div class="border rounded-lg">
+    <div class="border rounded-lg mt-4">
       <Table>
         <TableHeader>
           <TableRow>
@@ -591,25 +609,6 @@ onBeforeUnmount(() => {
         <div class="w-4 h-4 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin"></div>
         <span class="text-sm text-gray-600">Loading more users...</span>
       </div>
-    </div>
-
-    <!-- Per Page Selector -->
-    <div class="flex items-center justify-end gap-2 px-4 py-3 bg-white border border-gray-200 rounded-t-lg mt-4">
-      <label for="per-page" class="text-sm font-medium text-gray-700">Items per page:</label>
-      <Select v-model="selectedPerPage">
-        <SelectTrigger id="per-page" class="w-[140px]">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem
-            v-for="option in perPageOptions"
-            :key="option.value"
-            :value="option.value"
-          >
-            {{ option.label }}
-          </SelectItem>
-        </SelectContent>
-      </Select>
     </div>
 
     <!-- Info message for "Show all" mode -->
