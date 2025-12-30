@@ -44,8 +44,8 @@ export class RoleService extends BaseService {
   }
 
   // User Role Management
-  async getUsersWithRoles(page: number = 1, search: string = '', userSearch: string = '', emailSearch: string = '') {
-    const params: Record<string, any> = { page }
+  async getUsersWithRoles(page: number = 1, search: string = '', userSearch: string = '', emailSearch: string = '', perPage: number = 10) {
+    const params: Record<string, any> = { page, per_page: perPage }
 
     if (search) params.search = search
     if (userSearch) params.name = userSearch

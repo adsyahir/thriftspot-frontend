@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { UserPlus, Shield, Trash2, Users, ChevronLeft, ChevronRight, Search, X } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
@@ -46,8 +46,19 @@ const users = ref({
     total: 100
   }
 })
+
+// Per page selector
+const perPageOptions = [
+  { value: '10', label: '10 per page' },
+  { value: '50', label: '50 per page' },
+  { value: 'all', label: 'Show all' }
+]
+
+const selectedPerPage = ref('10')
 const roles = ref<Role[]>([])
 const loading = ref(false)
+const loadingMore = ref(false) // For lazy loading indicator
+const hasMoreData = ref(true) // Track if there's more data to load
 const isDialogOpen = ref(false)
 const currentUser = ref<UserWithRoles | null>(null)
 
@@ -62,16 +73,32 @@ const searchFilters = ref({
   email: (route.query.email as string) || '',
 })
 
-const loadUsers = async (page: number = 1) : Promise<void> => {
+const loadUsers = async (page: number = 1, append: boolean = false) : Promise<void> => {
   try {
-    loading.value = true
+    if (append) {
+      loadingMore.value = true
+    } else {
+      loading.value = true
+    }
+
+    // For "Show all", use chunk loading (50 at a time)
+    const perPageValue = selectedPerPage.value === 'all' ? 50 : parseInt(selectedPerPage.value)
+
     const response = await roleService.getUsersWithRoles(
       page,
       searchFilters.value.global,
       searchFilters.value.user,
-      searchFilters.value.email
+      searchFilters.value.email,
+      perPageValue
     )
-    users.value.data = response.data.data
+
+    // Append or replace data
+    if (append) {
+      users.value.data = [...users.value.data, ...response.data.data]
+    } else {
+      users.value.data = response.data.data
+    }
+
     // Update pagination from API response
     users.value.pagination = {
       currentPage: response.data.current_page,
@@ -79,11 +106,15 @@ const loadUsers = async (page: number = 1) : Promise<void> => {
       perPage: response.data.per_page,
       total: response.data.total
     }
+
+    // Check if there's more data
+    hasMoreData.value = response.data.current_page < response.data.last_page
   } catch (error) {
     console.error('Failed to load users:', error)
     alert('Failed to load users. Please try again.')
   } finally {
     loading.value = false
+    loadingMore.value = false
   }
 }
 
@@ -261,11 +292,47 @@ watch(searchFilters, () => {
   }, 500) // 500ms debounce
 }, { deep: true })
 
+// Watch perPage changes
+watch(selectedPerPage, async () => {
+  const scrollY = window.scrollY
+  users.value.pagination.currentPage = 1 // Reset to first page when changing page size
+  hasMoreData.value = true // Reset hasMoreData flag
+  await loadUsers(1)
+  await nextTick()
+  requestAnimationFrame(() => {
+    window.scrollTo(0, scrollY)
+  })
+})
+
+// Lazy load more data when scrolling (only for "Show all" mode)
+const handleScroll = async () => {
+  if (selectedPerPage.value !== 'all') return
+  if (loadingMore.value || !hasMoreData.value) return
+
+  const scrollHeight = document.documentElement.scrollHeight
+  const scrollTop = document.documentElement.scrollTop
+  const clientHeight = document.documentElement.clientHeight
+
+  // Load more when user is 300px from bottom
+  if (scrollTop + clientHeight >= scrollHeight - 300) {
+    const nextPage = users.value.pagination.currentPage + 1
+    await loadUsers(nextPage, true) // append = true
+  }
+}
+
 onMounted(() => {
   // Get initial page from URL or default to 1
   const initialPage = parseInt(route.query.page as string) || 1
   loadUsers(initialPage)
   loadRoles()
+
+  // Add scroll listener for lazy loading
+  window.addEventListener('scroll', handleScroll)
+})
+
+onBeforeUnmount(() => {
+  // Clean up scroll listener
+  window.removeEventListener('scroll', handleScroll)
 })
 </script>
 
@@ -518,8 +585,40 @@ onMounted(() => {
       </Table>
     </div>
 
-    <!-- Pagination -->
-    <div class="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6 rounded-b-lg mt-4">
+    <!-- Loading More Indicator (for lazy loading) -->
+    <div v-if="loadingMore && selectedPerPage === 'all'" class="flex justify-center py-4 bg-gray-50 border-x border-gray-200">
+      <div class="flex items-center gap-2">
+        <div class="w-4 h-4 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin"></div>
+        <span class="text-sm text-gray-600">Loading more users...</span>
+      </div>
+    </div>
+
+    <!-- Per Page Selector -->
+    <div class="flex items-center justify-end gap-2 px-4 py-3 bg-white border border-gray-200 rounded-t-lg mt-4">
+      <label for="per-page" class="text-sm font-medium text-gray-700">Items per page:</label>
+      <Select v-model="selectedPerPage">
+        <SelectTrigger id="per-page" class="w-[140px]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem
+            v-for="option in perPageOptions"
+            :key="option.value"
+            :value="option.value"
+          >
+            {{ option.label }}
+          </SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+
+    <!-- Info message for "Show all" mode -->
+    <div v-if="selectedPerPage === 'all'" class="flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 border-x border-b border-blue-200 text-sm text-blue-700 rounded-b-lg">
+      <span>Scroll down to load more users automatically</span>
+    </div>
+
+    <!-- Pagination (hidden in "Show all" mode as it uses infinite scroll) -->
+    <div v-if="selectedPerPage !== 'all'" class="flex items-center justify-between px-4 py-3 bg-white border-x border-b border-gray-200 sm:px-6 rounded-b-lg">
       <!-- Mobile pagination -->
       <div class="flex-1 flex justify-between sm:hidden">
         <button
