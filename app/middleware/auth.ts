@@ -8,8 +8,19 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const userStore = useUserStore()
 
-  // If store shows authenticated, verify with backend to be sure
   try {
+    // If no access_token (e.g., after page refresh), try to refresh first
+    if (!userStore.access_token) {
+
+      const refreshed = await userStore.refreshToken()
+
+      if (!refreshed) {
+        console.error('[AUTH MIDDLEWARE] Token refresh failed, redirecting to signin')
+        return navigateTo('/auth/signin', { replace: true })
+      }
+    }
+
+    // Verify authentication with backend
     const isAuthenticated = await userStore.verifyAuth()
 
     if (!isAuthenticated) {

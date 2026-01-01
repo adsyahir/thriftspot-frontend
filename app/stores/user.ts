@@ -135,17 +135,17 @@ export const useUserStore = defineStore('user', {
       if (this.isInitialLoad) {
         this.isLoading = true
       }
-    
+
       try {
         const authService = useAuthService()
         const { data } = await authService.me()
-    
+
         if (!data || !data.email) {
           this.clearUser()
           this.isAuthenticated = false
           return false
         }
-    
+
         this.setUser(
           data.email,
           data.username,
@@ -153,11 +153,10 @@ export const useUserStore = defineStore('user', {
           data.roles,
           data.permissions
         )
-    
+
         this.isAuthenticated = true
-    
-        const refreshed = await this.refreshToken()
-        return Boolean(refreshed) // ✅ always boolean
+
+        return true
       } catch (error) {
         this.clearUser()
         this.isAuthenticated = false
@@ -177,6 +176,7 @@ export const useUserStore = defineStore('user', {
       try {
         const authService = useAuthService()
         const response = await authService.refreshToken()
+
         if (response.data.access_token) {
           // Update access token
           this.access_token = response.data.access_token
