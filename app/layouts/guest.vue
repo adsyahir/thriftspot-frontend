@@ -35,10 +35,10 @@ const year = new Date().getFullYear()
     <!-- Header -->
     <header class="border-b border-gray-200">
       <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div class="flex items-center justify-between">
-          <NuxtLink to="/" class="flex items-center gap-2">
-            <SparklesIcon class="w-8 h-8 text-gray-900" />
-            <span class="text-2xl font-bold text-gray-900">ThriftSpot</span>
+        <div class="flex items-center justify-between gap-2">
+          <NuxtLink to="/" class="flex items-center gap-2 shrink-0">
+            <SparklesIcon class="w-6 h-6 sm:w-8 sm:h-8 text-gray-900" />
+            <span class="text-xl sm:text-2xl font-bold text-gray-900">ThriftSpot</span>
           </NuxtLink>
 
           <div class="hidden md:flex items-center gap-6">
@@ -109,8 +109,8 @@ const year = new Date().getFullYear()
             </NavigationMenu>
           </div>
 
-          <div class="flex items-center gap-3">
-            <NuxtLink to="/auth/signup">
+          <div class="flex items-center gap-1 sm:gap-3">
+            <NuxtLink to="/auth/signup" class="hidden sm:block">
               <Button variant="outline" size="sm">
                 <UserIcon class="w-4 h-4 mr-2" />
                 Sell Items
@@ -118,7 +118,7 @@ const year = new Date().getFullYear()
             </NuxtLink>
             <NuxtLink to="/auth/signin">
               <Button variant="ghost" size="sm">
-                <LogInIcon class="w-4 h-4 mr-2" />
+                <LogInIcon class="w-4 h-4 mr-2 hidden sm:block" />
                 Sign In
               </Button>
             </NuxtLink>
@@ -127,6 +127,11 @@ const year = new Date().getFullYear()
             </NuxtLink>
           </div>
         </div>
+        <ul class="md:hidden flex gap-5 pt-3 text-sm text-gray-700">
+          <li><NuxtLink to="/browse">Browse</NuxtLink></li>
+          <li><NuxtLink to="/shops">Shops</NuxtLink></li>
+          <li><NuxtLink to="/about">About</NuxtLink></li>
+        </ul>
       </nav>
     </header>
 
