@@ -82,6 +82,7 @@ async function confirmDelete() {
   try {
     await api.items.remove(deleting.value.id)
     deleteOpen.value = false
+    if (items.value.length === 1 && page.value > 1) page.value -= 1
     await load()
   } catch (error: any) {
     deleteError.value = error.message || 'Could not delete the item.'

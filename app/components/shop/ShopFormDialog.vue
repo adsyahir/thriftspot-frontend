@@ -136,12 +136,12 @@ const inputClass = 'w-full px-3 py-2 border border-gray-300 rounded-md text-sm f
         <div v-if="form.location_type === 'google_maps'" class="grid sm:grid-cols-2 gap-4">
           <div>
             <label for="shop-address" class="block text-sm font-medium text-gray-700 mb-1">Address *</label>
-            <Input id="shop-address" v-model="form.address" maxlength="255" />
+            <Input id="shop-address" :model-value="form.address ?? ''" maxlength="255" @update:model-value="form.address = String($event)" />
             <p v-if="err('address')" class="mt-1 text-sm text-red-600">{{ err('address') }}</p>
           </div>
           <div>
             <label for="shop-place-id" class="block text-sm font-medium text-gray-700 mb-1">Google place ID</label>
-            <Input id="shop-place-id" v-model="form.place_id" maxlength="255" />
+            <Input id="shop-place-id" :model-value="form.place_id ?? ''" maxlength="255" @update:model-value="form.place_id = String($event)" />
           </div>
         </div>
         <div v-else class="grid sm:grid-cols-2 gap-4">

@@ -5,6 +5,7 @@ import ItemCard from '~/components/item/ItemCard.vue'
 import { useApi } from '~/services'
 import { STATES, labelFor } from '~/lib/options'
 import { DAYS, mapsUrl } from '~/lib/shopForm'
+import { safeHttpUrl } from '~/lib/format'
 import type { Item } from '~/types/item'
 import type { Shop } from '~/types/shop'
 
@@ -29,7 +30,8 @@ const socials = computed(() => {
   const links = data.value?.shop.social_links ?? {}
   const entries: { label: string; href: string }[] = []
   for (const key of ['instagram', 'facebook', 'twitter', 'tiktok'] as const) {
-    if (links[key]) entries.push({ label: key, href: links[key]! })
+    const href = safeHttpUrl(links[key])
+    if (href) entries.push({ label: key, href })
   }
   if (links.whatsapp) entries.push({ label: 'whatsapp', href: `https://wa.me/${links.whatsapp.replace(/\D/g, '')}` })
   return entries

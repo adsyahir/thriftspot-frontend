@@ -36,26 +36,30 @@ export function emptyShopForm(): ShopRequest {
 }
 
 export function toShopPayload(form: ShopRequest): ShopRequest {
-  const payload: ShopRequest = JSON.parse(JSON.stringify(form))
-
-  if (payload.location_type === 'coordinates') {
-    delete payload.address
-    delete payload.place_id
-  } else {
-    delete payload.latitude
-    delete payload.longitude
-    if (!payload.place_id) delete payload.place_id
-  }
+  const isMaps = form.location_type === 'google_maps'
 
   const links: SocialLinks = {}
-  for (const [key, value] of Object.entries(payload.social_links ?? {})) {
+  for (const [key, value] of Object.entries(form.social_links ?? {})) {
     if (typeof value === 'string' && value.trim() !== '') {
       links[key as keyof SocialLinks] = value.trim()
     }
   }
-  payload.social_links = links
 
-  return payload
+  // Unused location fields are sent as null, not omitted, so an update clears values left from the other type.
+  return {
+    name: form.name,
+    description: form.description,
+    state: form.state,
+    location_type: form.location_type,
+    address: isMaps ? form.address || null : null,
+    place_id: isMaps ? form.place_id || null : null,
+    latitude: isMaps ? null : (form.latitude ?? null),
+    longitude: isMaps ? null : (form.longitude ?? null),
+    phone_number: form.phone_number,
+    email: form.email,
+    social_links: links,
+    operating_hours: JSON.parse(JSON.stringify(form.operating_hours)),
+  }
 }
 
 export function mapsUrl(shop: Shop): string {

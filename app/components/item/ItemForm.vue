@@ -15,6 +15,7 @@ const api = useApi()
 
 const shops = ref<Shop[]>([])
 const shopsLoading = ref(true)
+const shopsFailed = ref(false)
 const saving = ref(false)
 const formError = ref<string | null>(null)
 const fieldErrors = ref<Record<string, string[]>>({})
@@ -53,17 +54,23 @@ function onFile(event: Event) {
 
 onBeforeUnmount(revoke)
 
-onMounted(async () => {
+async function loadShops() {
+  shopsLoading.value = true
+  shopsFailed.value = false
+  formError.value = null
   try {
     const response = await api.shops.mine({ per_page: 50 })
     shops.value = response.data
     if (!props.item && shops.value.length === 1) form.shop_id = shops.value[0]!.id
   } catch (error: any) {
+    shopsFailed.value = true
     formError.value = error.message || 'Could not load your shops.'
   } finally {
     shopsLoading.value = false
   }
-})
+}
+
+onMounted(loadShops)
 
 async function submit() {
   saving.value = true
@@ -104,6 +111,9 @@ const selectClass = 'w-full px-3 py-2 border border-gray-300 rounded-md text-sm 
 
 <template>
   <p v-if="shopsLoading" class="text-gray-600">Loading...</p>
+  <p v-else-if="shopsFailed" class="text-red-600">
+    {{ formError }} <button type="button" class="underline" @click="loadShops">Try again</button>
+  </p>
   <div v-else-if="shops.length === 0" class="bg-white border border-dashed border-gray-300 rounded-lg p-8 text-gray-600">
     Create a shop before adding items.
     <NuxtLink to="/shop" class="text-gray-900 underline">Go to Shop Management</NuxtLink>

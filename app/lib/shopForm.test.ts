@@ -5,12 +5,26 @@ import type { Shop } from '~/types/shop'
 const shop: Shop = { ...emptyShopForm(), id: 1, created_at: '2026-01-01' }
 
 describe('toShopPayload', () => {
-  it('drops address when location type is coordinates', () => {
-    expect(toShopPayload({ ...emptyShopForm(), location_type: 'coordinates', address: 'x' }).address).toBeUndefined()
+  it('sends null address and place id when location type is coordinates', () => {
+    const payload = toShopPayload({ ...emptyShopForm(), location_type: 'coordinates', address: 'x', place_id: 'P' })
+    expect(payload.address).toBeNull()
+    expect(payload.place_id).toBeNull()
   })
 
-  it('drops latitude when location type is google_maps', () => {
-    expect(toShopPayload({ ...emptyShopForm(), location_type: 'google_maps', latitude: 1 }).latitude).toBeUndefined()
+  it('sends null coordinates when location type is google_maps', () => {
+    const payload = toShopPayload({ ...emptyShopForm(), location_type: 'google_maps', latitude: 1, longitude: 2 })
+    expect(payload.latitude).toBeNull()
+    expect(payload.longitude).toBeNull()
+  })
+
+  it('sends null place id when it was cleared', () => {
+    expect(toShopPayload({ ...emptyShopForm(), place_id: '' }).place_id).toBeNull()
+  })
+
+  it('does not send server-only fields', () => {
+    const payload = toShopPayload({ ...emptyShopForm(), id: 5, created_at: 'x' } as any) as any
+    expect(payload.id).toBeUndefined()
+    expect(payload.created_at).toBeUndefined()
   })
 
   it('drops blank social links', () => {

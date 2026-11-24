@@ -25,8 +25,8 @@ export interface ShopRequest {
   description: string
   state: string
   location_type: 'google_maps' | 'coordinates'
-  place_id?: string
-  address?: string
+  place_id?: string | null
+  address?: string | null
   latitude?: number | null
   longitude?: number | null
   phone_number: string
