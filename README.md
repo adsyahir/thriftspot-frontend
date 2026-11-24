@@ -1,75 +1,51 @@
-# Nuxt Minimal Starter
+# ThriftSpot Frontend
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Nuxt 4 app for ThriftSpot, a directory of thrift shops and secondhand items in Malaysia. Visitors browse items and shops. Signed-in users manage their shops and items and see view analytics. Admins manage roles and permissions.
+
+The API lives in the sibling `thriftspot-backend` repo. Run it first (see its README).
+
+## Stack
+
+Nuxt 4, Pinia, Tailwind 4, shadcn-vue components, Axios. Vitest for unit tests.
 
 ## Setup
 
-Make sure to install dependencies:
-
 ```bash
-# npm
 npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
+cp .env.example .env
 ```
 
-## Development Server
+`.env` needs one value, the API base URL **including `/api`**:
 
-Start the development server on `http://localhost:3000`:
+```
+NUXT_PUBLIC_API_BASE=http://localhost:8000/api
+```
+
+Use `http://localhost:8080/api` if the backend runs in Docker.
 
 ```bash
-# npm
 npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
 ```
 
-## Production
+The app is at `http://localhost:3000`. The backend's `CORS_ALLOWED_ORIGINS` must include that origin.
 
-Build the application for production:
+## Scripts
 
-```bash
-# npm
-npm run build
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | dev server |
+| `npm run build` | production build |
+| `npm test` | Vitest unit tests (`app/lib`) |
+| `npm run typecheck` | `vue-tsc` type check |
 
-# pnpm
-pnpm build
+## Structure
 
-# yarn
-yarn build
+- `app/pages`: routes. Public: `/`, `/browse`, `/item/:id`, `/shops`, `/shops/:id`, `/about`. Signed in: `/dashboard`, `/shop`, `/items`, `/analytics`. Admin: `/admin/roles`.
+- `app/services`: all API calls. Components use `useApi()` and never call Axios directly.
+- `app/lib`: pure helpers (price formatting, shop form payloads, option lists) with tests.
 
-# bun
-bun run build
-```
+Public pages load their data in the browser (`useAsyncData(..., { server: false })`) so the API's rate limiting sees each visitor's IP rather than the Nuxt server's.
 
-Locally preview production build:
+## Demo login
 
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+If the backend was seeded locally, sign in with `admin@example.com` / `password`. You can also sign up for a regular account at `/auth/signup`.
