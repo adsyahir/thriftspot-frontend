@@ -22,6 +22,7 @@ const isDialogOpen = ref(false)
 const form = ref<ShopRequest>({
   name: '',
   description: '',
+  state: '',
   location_type: 'google_maps',
   place_id: '',
   address: '',

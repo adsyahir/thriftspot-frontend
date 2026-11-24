@@ -7,7 +7,6 @@ export default defineNuxtPlugin(() => {
   const axiosApi: AxiosInstance = axios.create({
     baseURL: config.public.apiBase,
     headers: {
-      'Content-Type': 'application/json',
       'Accept': 'application/json',
     },
     withCredentials: true, // Important for CSRF protection and cookies

@@ -58,8 +58,8 @@ export class RoleService extends BaseService {
     return await this.post(`/users/${userId}/roles`, data)
   }
 
-  async removeRoleFromUser(userId: number, _data: RemoveRoleRequest) {
-    return await this.delete(`/users/${userId}/roles`)
+  async removeRoleFromUser(userId: number, data: RemoveRoleRequest) {
+    return await this.delete(`/users/${userId}/roles`, data)
   }
 }
 

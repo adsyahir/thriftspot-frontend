@@ -7,6 +7,9 @@
 
 import { AuthService } from './auth'
 import { RoleService } from './roles'
+import { ShopService } from './shops'
+import { ItemService } from './items'
+import { AnalyticsService } from './analytics'
 
 /**
  * Composable to access all API services
@@ -29,9 +32,21 @@ export const useApi = () => {
   const roles = new RoleService()
   roles.init(nuxtApp)
 
+  const shops = new ShopService()
+  shops.init(nuxtApp)
+
+  const items = new ItemService()
+  items.init(nuxtApp)
+
+  const analytics = new AnalyticsService()
+  analytics.init(nuxtApp)
+
   return {
     auth,
     roles,
+    shops,
+    items,
+    analytics,
   }
 }
 
@@ -46,5 +61,8 @@ export { useRoleService } from './roles'
  */
 export { AuthService } from './auth'
 export { RoleService } from './roles'
+export { ShopService } from './shops'
+export { ItemService } from './items'
+export { AnalyticsService } from './analytics'
 export { BaseService } from './base'
 export { ErrorHandler, type ErrorResponse } from './errorHandler'

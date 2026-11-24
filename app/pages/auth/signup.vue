@@ -1,31 +1,59 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { SparklesIcon, MailIcon, UserIcon, LockIcon } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+
+import { useApi } from '~/services'
 
 definePageMeta({
   middleware: 'guest'
 })
 
-const email = ref('')
-const username = ref('')
-const password = ref('')
-const passwordConfirmation = ref('')
+const form = reactive({
+  email: '',
+  username: '',
+  password: '',
+  password_confirmation: '',
+})
 const isLoading = ref(false)
+const formError = ref<string | null>(null)
+const fieldErrors = ref<Record<string, string[]>>({})
+
+const api = useApi()
+const userStore = useUserStore()
+
+const firstError = (field: string) => fieldErrors.value[field]?.[0]
 
 const handleSignUp = async () => {
-  if (password.value !== passwordConfirmation.value) {
-    alert('Passwords do not match')
+  formError.value = null
+  fieldErrors.value = {}
+
+  if (form.password !== form.password_confirmation) {
+    fieldErrors.value = { password_confirmation: ['Passwords do not match'] }
     return
   }
 
   isLoading.value = true
 
-  // TODO: Implement actual sign up logic
-  setTimeout(() => {
+  try {
+    await api.auth.register({ ...form })
+
+    const result = await userStore.login({ email: form.email, password: form.password })
+    if (result.success) {
+      await navigateTo('/dashboard')
+    } else {
+      await navigateTo('/auth/signin')
+    }
+  } catch (error: any) {
+    if (error.errors) {
+      fieldErrors.value = error.errors
+    } else {
+      formError.value = error.message || 'Could not create your account. Please try again.'
+    }
+  } finally {
     isLoading.value = false
-  }, 1000)
+  }
 }
 </script>
 
@@ -60,13 +88,14 @@ const handleSignUp = async () => {
               </div>
               <Input
                 id="email"
-                v-model="email"
+                v-model="form.email"
                 type="email"
                 placeholder="you@example.com"
                 required
                 class="pl-10"
               />
             </div>
+            <p v-if="firstError('email')" class="mt-1 text-sm text-red-600">{{ firstError('email') }}</p>
           </div>
 
           <!-- Username Field -->
@@ -80,13 +109,14 @@ const handleSignUp = async () => {
               </div>
               <Input
                 id="username"
-                v-model="username"
+                v-model="form.username"
                 type="text"
                 placeholder="johndoe"
                 required
                 class="pl-10"
               />
             </div>
+            <p v-if="firstError('username')" class="mt-1 text-sm text-red-600">{{ firstError('username') }}</p>
           </div>
 
           <!-- Password Field -->
@@ -100,13 +130,14 @@ const handleSignUp = async () => {
               </div>
               <Input
                 id="password"
-                v-model="password"
+                v-model="form.password"
                 type="password"
                 placeholder="••••••••"
                 required
                 class="pl-10"
               />
             </div>
+            <p v-if="firstError('password')" class="mt-1 text-sm text-red-600">{{ firstError('password') }}</p>
           </div>
 
           <!-- Password Confirmation Field -->
@@ -120,14 +151,17 @@ const handleSignUp = async () => {
               </div>
               <Input
                 id="password-confirmation"
-                v-model="passwordConfirmation"
+                v-model="form.password_confirmation"
                 type="password"
                 placeholder="••••••••"
                 required
                 class="pl-10"
               />
             </div>
+            <p v-if="firstError('password_confirmation')" class="mt-1 text-sm text-red-600">{{ firstError('password_confirmation') }}</p>
           </div>
+
+          <p v-if="formError" class="text-sm text-red-600">{{ formError }}</p>
 
           <!-- Submit Button -->
           <div>

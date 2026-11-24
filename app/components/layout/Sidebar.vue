@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import {
   LayoutDashboard,
   Package,
@@ -44,8 +44,13 @@ const navigation = [
     name: 'Roles & Permissions',
     href: '/admin/roles',
     icon: Shield,
+    permission: 'view-users',
   },
 ]
+
+const visibleNavigation = computed(() =>
+  navigation.filter((item) => !item.permission || userStore.hasPermission(item.permission))
+)
 
 const toggleSidebar = () => {
   isSidebarOpen.value = !isSidebarOpen.value
@@ -97,7 +102,7 @@ const closeSidebar = () => {
         <!-- Navigation -->
         <nav class="flex-1 overflow-y-auto py-4 px-3">
           <div class="space-y-1">
-            <template v-for="item in navigation" :key="item.name">
+            <template v-for="item in visibleNavigation" :key="item.name">
               <!-- Items with children -->
               <div v-if="item.children">
                 <div class="px-3 py-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">

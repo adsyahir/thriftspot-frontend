@@ -62,15 +62,16 @@ export class BaseService {
     return this.handleRequest(() => this.axiosApi!.patch(endpoint, data))
   }
 
-  async delete(endpoint: string) {
+  async delete(endpoint: string, data?: object) {
     this.ensureAxiosInitialized()
-    return this.handleRequest(() => this.axiosApi!.delete(endpoint))
+    return this.handleRequest(() => this.axiosApi!.delete(endpoint, data ? { data } : undefined))
   }
 
   async postFormData(endpoint: string, formData: FormData) {
     this.ensureAxiosInitialized()
-    // Let axios automatically set Content-Type with proper boundary for FormData
-    return this.handleRequest(() => this.axiosApi!.post(endpoint, formData))
+    return this.handleRequest(() =>
+      this.axiosApi!.post(endpoint, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+    )
   }
 
   async putFormData(endpoint: string, formData: FormData) {
@@ -80,13 +81,8 @@ export class BaseService {
       formData.append('_method', 'PUT')
     }
 
-    // Let axios automatically set Content-Type with proper boundary for FormData
     return this.handleRequest(() =>
-      this.axiosApi!.post(endpoint, formData, {
-        headers: {
-          'X-HTTP-Method-Override': 'PUT',
-        },
-      })
+      this.axiosApi!.post(endpoint, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
     )
   }
 

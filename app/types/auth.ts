@@ -29,3 +29,10 @@ export interface RefreshTokenResponse {
   token_type: string;
   expires_in: number;
 }
+
+export interface RegisterRequest {
+  email: string;
+  username: string;
+  password: string;
+  password_confirmation: string;
+}

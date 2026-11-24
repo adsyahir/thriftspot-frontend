@@ -1,5 +1,5 @@
 import { BaseService } from './base'
-import type { LoginRequest, LoginResponse } from '~/types/auth'
+import type { LoginRequest, RegisterRequest } from '~/types/auth'
 
 export class AuthService extends BaseService {
   /**
@@ -7,6 +7,13 @@ export class AuthService extends BaseService {
    */
   async login(credentials: LoginRequest) {
     return await this.post('/auth/login', credentials)
+  }
+
+  /**
+   * Register a new account
+   */
+  async register(data: RegisterRequest) {
+    return await this.post('/auth/register', data)
   }
 
   /**
